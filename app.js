@@ -30,6 +30,7 @@ const state = {
   startedAt: null,
   lastPosition: null,
   currentPosition: null,
+  followUser: true,
   mode: "Caminar",
   difficulty: "Normal",
   speedMultiplier: 1,
@@ -46,6 +47,7 @@ const els = {
   summaryScreen: document.querySelector("#summaryScreen"),
   startButton: document.querySelector("#startButton"),
   stopButton: document.querySelector("#stopButton"),
+  recenterButton: document.querySelector("#recenterButton"),
   newSessionButton: document.querySelector("#newSessionButton"),
   permissionMessage: document.querySelector("#permissionMessage"),
   sessionMode: document.querySelector("#sessionMode"),
@@ -71,6 +73,7 @@ function initApp() {
   renderHistory();
   els.startButton.addEventListener("click", startSession);
   els.stopButton.addEventListener("click", () => endSession("manual"));
+  els.recenterButton.addEventListener("click", recenterMap);
   els.newSessionButton.addEventListener("click", showStartScreen);
 
   if ("serviceWorker" in navigator) {
@@ -126,6 +129,7 @@ function resetSessionState() {
   state.lives = 3;
   state.nearestZombieMeters = null;
   state.speedMultiplier = 1;
+  state.followUser = true;
   state.isRunning = true;
 }
 
@@ -140,7 +144,11 @@ function bootstrapMap(position) {
   if (!state.map) {
     state.map = L.map("map", {
       zoomControl: false,
-      attributionControl: true
+      attributionControl: true,
+      dragging: true,
+      tap: false,
+      touchZoom: true,
+      scrollWheelZoom: false
     });
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -149,6 +157,10 @@ function bootstrapMap(position) {
     }).addTo(state.map);
 
     L.control.zoom({ position: "topright" }).addTo(state.map);
+    state.map.on("dragstart zoomstart", () => {
+      state.followUser = false;
+      updateRecenterButton();
+    });
   }
 
   state.map.setView(coords, 17);
@@ -203,8 +215,18 @@ function handlePositionUpdate(position) {
   };
 
   state.userMarker.setLatLng(next);
-  state.map.panTo(next, { animate: true, duration: 0.55 });
+  if (state.followUser) {
+    state.map.panTo(next, { animate: true, duration: 0.55 });
+  }
   updateStats();
+}
+
+function recenterMap() {
+  if (!state.currentPosition || !state.map) return;
+
+  state.followUser = true;
+  state.map.panTo(state.currentPosition, { animate: true, duration: 0.45 });
+  updateRecenterButton();
 }
 
 function createZombies() {
@@ -504,6 +526,7 @@ function showGameScreen() {
   els.summaryScreen.hidden = true;
   els.gameScreen.hidden = false;
   els.sessionMode.textContent = `${state.mode} · ${state.difficulty}`;
+  updateRecenterButton();
   window.setTimeout(() => state.map?.invalidateSize(), 100);
 }
 
@@ -518,6 +541,11 @@ function showStartScreen() {
   els.gameScreen.hidden = true;
   els.startScreen.hidden = false;
   showPermissionMessage("");
+}
+
+function updateRecenterButton() {
+  els.recenterButton.textContent = state.followUser ? "Siguiendo" : "Mi ubicación";
+  els.recenterButton.classList.toggle("is-following", state.followUser);
 }
 
 function formatDuration(totalSeconds) {

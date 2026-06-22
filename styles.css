@@ -256,6 +256,12 @@ legend {
   inset: 0;
   z-index: 1;
   background: #11151c;
+  touch-action: none;
+}
+
+.leaflet-container {
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .leaflet-control-attribution {
@@ -288,6 +294,22 @@ legend {
   align-items: center;
   gap: 9px;
   font-weight: 900;
+}
+
+.map-action {
+  position: absolute;
+  z-index: 4;
+  right: 12px;
+  bottom: calc(max(10px, env(safe-area-inset-bottom)) + 178px);
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(46, 168, 255, 0.38);
+  border-radius: 8px;
+  background: rgba(8, 10, 14, 0.86);
+  color: var(--text);
+  font-weight: 900;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
 }
 
 .status-dot {
@@ -430,5 +452,10 @@ legend {
     left: 24px;
     max-width: 720px;
     margin: 0 auto;
+  }
+
+  .map-action {
+    right: calc(50% - 360px);
+    bottom: calc(max(24px, env(safe-area-inset-bottom)) + 178px);
   }
 }
